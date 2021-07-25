@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const permissions = ['administrator', 'content creator', 'community moderator', 'unprivileged'];
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -8,6 +9,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     trim: true,
+    unique: true
   },
   password: {
     type: String,
@@ -15,7 +17,8 @@ const userSchema = new mongoose.Schema({
   },
   permission: {
     type: String,
-    trim: true
+    trim: true,
+    enum: {values: permissions, message: '{VALUE} is not valid permission'}
   }
 });
 
