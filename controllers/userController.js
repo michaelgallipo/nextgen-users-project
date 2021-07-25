@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 require('../models/User');
 const User = mongoose.model('User');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const saltRounds = 10;
 const permissions = ['administrator', 'content creator', 'community moderator', 'unprivileged'];
 
@@ -76,7 +77,8 @@ exports.login = async (req, res) => {
   if (user) {
     const validPassword = await bcrypt.compare(req.body.password, user.password)
     if (validPassword) {
-      res.status(200).json({message: 'Valid Password'});
+      const token = jwt.sign({ user: user.email }, process.env.JWTSECRET);
+      res.status(200).json(token);
     } else {
       res.status(400).json({message: 'Invalid Password'});
     }
