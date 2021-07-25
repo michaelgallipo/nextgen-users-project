@@ -5,8 +5,9 @@ require('../models/User');
 const User = mongoose.model('User');
 
 router.get('/', (req, res) => {
-  // res.send('It works!');
-  User.find({}, (err, users) => {
+  console.log(req.query);
+  let filter = req.query || {};
+  User.find(filter, (err, users) => {
     if (err) res.send(err);
     res.json(users);
   });
@@ -22,5 +23,22 @@ router.post('/', (req, res) => {
       res.send('Sorry! Something went wrong.');
     });
 });
+
+router.get('/:userId', (req, res) => {
+  User.findById(req.params.userId, (err, user) => {
+    if (err) res.send(err);
+    res.json(user);
+  });
+})
+
+router.delete('/:userId', (req, res) => {
+  User.deleteOne({_id: req.params.userId}, (err) => {
+    if (err) res.send(err);
+    res.json({
+      message: 'User Successfully Deleted',
+      _id: req.params.userId
+    });
+  });
+})
 
 module.exports = router;
