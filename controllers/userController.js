@@ -39,10 +39,12 @@ exports.createUser = async (req, res) => {
     .then(() => { res.send('User Successfully Saved!'); })
     .catch((err) => {
       if (err.errors) {
-        // res.status(400).send(err.errors.permission.message);
         let errArray = Object.entries(err.errors);
         let errMessage = errArray.map(error => error[1].message);
         res.status(400).send(errMessage);        
+      }
+      else if (err.keyValue) {
+        res.status(400).send('email is already registered')
       }
       else {
         res.status(400).send('Sorry! Something went wrong.');
@@ -68,6 +70,9 @@ exports.deleteUser = (req, res) => {
 }
 
 exports.updateUser = async (req, res) => {
+  if (req.body.name === "") {
+    return res.status(400).send('Name is required');
+  };
   if (req.body.email) {
     if (!validateEmail(req.body.email)) {
       return res.status(400).send('Invalid Email')
