@@ -26,15 +26,26 @@ exports.listAllUsers = (req, res) => {
 
 exports.createUser = async (req, res) => {
   const user = new User(req.body);
+  if (!validateEmail(user.email)) {
+    return res.status(400).send('Invalid Email')
+  }
+  user.password = user.password ? user.password : ""
+  let passwordErrors = validatePassword(user.password);
+  if (passwordErrors.length > 0) {
+    return res.status(400).send(passwordErrors);
+  }
   user.password = await bcrypt.hash(user.password, saltRounds);
   user.save()
     .then(() => { res.send('User Successfully Saved!'); })
     .catch((err) => {
-      if (err.errors.permission) {
-        res.send(err.errors.permission.message);
+      if (err.errors) {
+        // res.status(400).send(err.errors.permission.message);
+        let errArray = Object.entries(err.errors);
+        let errMessage = errArray.map(error => error[1].message);
+        res.status(400).send(errMessage);        
       }
       else {
-        res.send('Sorry! Something went wrong.');
+        res.status(400).send('Sorry! Something went wrong.');
       }
     });
 };
@@ -57,9 +68,18 @@ exports.deleteUser = (req, res) => {
 }
 
 exports.updateUser = async (req, res) => {
+  if (req.body.email) {
+    if (!validateEmail(req.body.email)) {
+      return res.status(400).send('Invalid Email')
+    }
+  };
   if (req.body.password) {
+    let passwordErrors = validatePassword(req.body.password);
+    if (passwordErrors.length > 0) {
+      return res.status(400).send(passwordErrors);
+    }
     req.body.password = await bcrypt.hash(req.body.password, saltRounds);
-  }
+  };
   User.findOneAndUpdate(
     {_id: req.params.userId},
     req.body,
@@ -71,3 +91,32 @@ exports.updateUser = async (req, res) => {
   );
 };
 
+const validateEmail = (email) => {
+  if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(email))
+  {
+    return true
+  }
+    return false
+};
+
+const validatePassword = (password) => {
+  const errors = [];
+  // could chain tests together but would generate more generic error message
+  if (password.length < 8) {
+    errors.push("Password must contain at least 8 charachters");
+  }
+  if (!/(?=.*\d)/.test(password)) {
+    errors.push("Password must contain at least one digit");
+  }
+  if (!/(?=.*[a-z])/.test(password)) {
+    errors.push("Password must contain at least one lower case letter")
+  }
+  if (!/(?=.*[A-Z])/.test(password)) {
+    errors.push("Password must contain at least one upper case letter")
+  }
+  if (!/(?=.*[!@#$%^&*])/.test(password)) {
+    errors.push("Password must contain at least one special character")
+  }
+
+  return errors;
+};
