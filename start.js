@@ -1,7 +1,6 @@
 const app = require('./app');
 require('dotenv').config();
 const mongoose = require('mongoose');
-// require('./models/User');
 
 mongoose.connect(process.env.DATABASE, {
   useNewUrlParser: true,

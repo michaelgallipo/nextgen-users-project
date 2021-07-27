@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 require('../models/User');
 const User = mongoose.model('User');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const saltRounds = 10;
-const permissions = ['administrator', 'content creator', 'community moderator', 'unprivileged'];
 
 exports.listAllUsers = (req, res) => {
-  let filter = [{'permission': {$in: permissions}}];
+  // allows filtering by multiple criteria, starts with default of none
+  // Filtering is 'OR' and name and email allow partial matches
+  const filter = [];
   if (req.query.permission) {
-    filter[0].permission = req.query.permission
+    filter.push({'permission': req.query.permission});
   };
   if (req.query.name) {
     filter.push({'name': new RegExp(req.query.name)})
@@ -17,8 +17,8 @@ exports.listAllUsers = (req, res) => {
   if (req.query.email) {
     filter.push({'email': new RegExp(req.query.email)})
   }
-  console.log(filter);
-  User.find({$or: filter}, (err, users) => {
+  const filterObj = filter.length > 0 ? {$or: filter} : {};
+  User.find(filterObj, (err, users) => {
     if (err) res.send(err);
     res.json(users);
   });
@@ -30,7 +30,6 @@ exports.createUser = async (req, res) => {
   user.save()
     .then(() => { res.send('User Successfully Saved!'); })
     .catch((err) => {
-      console.log(err);
       if (err.errors.permission) {
         res.send(err.errors.permission.message);
       }
@@ -72,17 +71,3 @@ exports.updateUser = async (req, res) => {
   );
 };
 
-exports.login = async (req, res) => {
-  const user = await User.findOne({email: req.body.email});
-  if (user) {
-    const validPassword = await bcrypt.compare(req.body.password, user.password)
-    if (validPassword) {
-      const token = jwt.sign({ user: user.email }, process.env.JWTSECRET);
-      res.status(200).json(token);
-    } else {
-      res.status(400).json({message: 'Invalid Password'});
-    }
-  } else {
-    res.status(401).json({message: 'User Does Not Exist'})
-  }
-};
