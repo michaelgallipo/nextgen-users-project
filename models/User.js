@@ -14,11 +14,12 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    trim: true,
+    trim: true
   },
   permission: {
     type: String,
     trim: true,
+    required: true,
     enum: {values: permissions, message: '{VALUE} is not valid permission'}
   }
 });

@@ -29,6 +29,7 @@ exports.createUser = async (req, res) => {
   if (!validateEmail(user.email)) {
     return res.status(400).send('Invalid Email')
   }
+  // to handle someone passing an empty password field
   user.password = user.password ? user.password : ""
   let passwordErrors = validatePassword(user.password);
   if (passwordErrors.length > 0) {
@@ -61,7 +62,7 @@ exports.findUser = (req, res) => {
 
 exports.deleteUser = (req, res) => {
   User.deleteOne({_id: req.params.userId}, (err) => {
-    if (err) res.send(err);
+    if (err) return res.status(400).send(err);
     res.json({
       message: 'User Successfully Deleted',
       _id: req.params.userId
@@ -90,7 +91,7 @@ exports.updateUser = async (req, res) => {
     req.body,
     {new: true},
     (err, user) => {
-      if (err) res.send(err);
+      if (err) return res.status(400).send(err);
       res.json(user);
     }
   );
@@ -108,7 +109,7 @@ const validatePassword = (password) => {
   const errors = [];
   // could chain tests together but would generate more generic error message
   if (password.length < 8) {
-    errors.push("Password must contain at least 8 charachters");
+    errors.push("Password must contain at least 8 characters");
   }
   if (!/(?=.*\d)/.test(password)) {
     errors.push("Password must contain at least one digit");
